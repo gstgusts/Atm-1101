@@ -19,8 +19,16 @@ public class AtmForm extends JFrame {
 
     JPanel accountPanel;
     JList lstAccounts;
+    JButton btnSelectAccount;
 
     JPanel actionPanel;
+    JLabel lblBalance;
+    JButton btnCheckBalance;
+    JTextField txtTakeAmount;
+    JButton btnTakeMoney;
+    JButton btnBack;
+    JButton btnExit;
+
     JPanel mainPanel;
     CardLayout cardLayout;
 
@@ -59,24 +67,102 @@ public class AtmForm extends JFrame {
 
     private void initActionPanel() {
         actionPanel = new JPanel();
-        actionPanel.setBackground(Color.darkGray);
+        //actionPanel.setBackground(Color.darkGray);
+
+        actionPanel.setLayout(new GridLayout(6, 1));
+
+        lblBalance = new JLabel();
+        actionPanel.add(lblBalance);
+
+        btnCheckBalance = new JButton("CHECK BALANCE");
+        actionPanel.add(btnCheckBalance);
+        btnCheckBalance.addActionListener(a -> {
+            lblBalance.setText(Double.toString(atm.getBalance()));
+        });
+
+        txtTakeAmount = new JTextField();
+        actionPanel.add(txtTakeAmount);
+
+        btnTakeMoney = new JButton("TAKE");
+        actionPanel.add(btnTakeMoney);
+        btnTakeMoney.addActionListener(a -> {
+
+             if(txtTakeAmount.getText().isBlank()) {
+                 return;
+             }
+
+             var amount = Integer.valueOf(txtTakeAmount.getText());
+
+             txtTakeAmount.setText("");
+
+             var result = atm.takeMoney(amount);
+
+            switch (result) {
+                case SUCCESS -> {
+                    lblBalance.setText("Take your money");
+                    break;
+                }
+                case ATM_NOT_ENOUGH -> {
+                    lblBalance.setText("Pick different amount");
+                    break;
+                }
+                case ACCOUNT_NOT_ENOUGH -> {
+                    lblBalance.setText("Not enough money in your account");
+                    break;
+                }
+                case ERROR -> {
+                    lblBalance.setText("Unable to take money");
+                    break;
+                }
+            }
+
+        });
+
+        btnBack = new JButton("GO TO ACCOUNTS");
+        actionPanel.add(btnBack);
+        btnBack.addActionListener(a -> {
+            cardLayout.previous(mainPanel);
+        });
+
+        btnExit = new JButton("EXIT");
+        actionPanel.add(btnExit);
+        btnExit.addActionListener(a -> {
+            atm.exit();
+            cardLayout.first(mainPanel);
+        });
+
         mainPanel.add(actionPanel);
     }
 
     private void initAccountPanel() {
         accountPanel = new JPanel();
-        accountPanel.setBackground(Color.gray);
+        //accountPanel.setBackground(Color.gray);
+
+        accountPanel.setLayout(new GridLayout(2, 1));
 
         lstAccounts = new JList();
 
         accountPanel.add(lstAccounts);
+
+        btnSelectAccount = new JButton("SELECT");
+
+        btnSelectAccount.addActionListener(a -> {
+            var accountNumber = lstAccounts.getSelectedValue().toString();
+
+            if(atm.selectAccount(accountNumber)) {
+                lblBalance.setText("");
+                cardLayout.next(mainPanel);
+            };
+        });
+
+        accountPanel.add(btnSelectAccount);
 
         mainPanel.add(accountPanel);
     }
 
     private void initPinPanel() {
         pinPanel = new JPanel();
-        pinPanel.setBackground(Color.lightGray);
+        //pinPanel.setBackground(Color.lightGray);
         pinPanel.setLayout(new GridLayout(4,1));
 
         lblInfo = new JLabel("ENTER PIN");
@@ -98,6 +184,7 @@ public class AtmForm extends JFrame {
 
             lstAccounts.setListData(accounts);
 
+            pfPin.setText("");
             cardLayout.next(mainPanel);
         });
 
@@ -111,7 +198,7 @@ public class AtmForm extends JFrame {
 
     private void initStartPanel() {
         startPanel = new JPanel();
-        startPanel.setBackground(Color.white);
+        //startPanel.setBackground(Color.white);
         btnStart = new JButton("Start");
         btnStart.addActionListener(a -> {
             atm.enterCard(card);

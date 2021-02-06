@@ -39,21 +39,24 @@ public class Atm {
     }
 
     public Iterable<BankAccount> getBankAccounts() {
-        if(!hasCard() || !pinValidated()) {
-            return new ArrayList<>();
-        }
-
-        var clientId = currentCard.getClient().getCode();
-
-        var result = accounts.stream()
-                .filter(a -> a.getOwner().getCode().equalsIgnoreCase(clientId))
-                .collect(Collectors.toList());
-
-        return result;
+        return getAccounts();
     }
 
-    public void selectAccount(BankAccount account) {
-        currentAccount = account;
+    public boolean selectAccount(String accountNumber) {
+        if(!hasCard() || !pinValidated()) {
+            return false;
+        }
+
+        var result = getAccounts().stream()
+                .filter(a -> a.getNumber().equalsIgnoreCase(accountNumber))
+                .findFirst();
+
+        if(result.isPresent()) {
+            currentAccount = result.get();
+            return true;
+        }
+
+        return false;
     }
 
     public double getBalance() {
@@ -84,5 +87,19 @@ public class Atm {
         currentAccount = null;
         currentCard = null;
         pinValid = false;
+    }
+
+    private List<BankAccount> getAccounts() {
+        if(!hasCard() || !pinValidated()) {
+            return new ArrayList<>();
+        }
+
+        var clientId = currentCard.getClient().getCode();
+
+        var result = accounts.stream()
+                .filter(a -> a.getOwner().getCode().equalsIgnoreCase(clientId))
+                .collect(Collectors.toList());
+
+        return result;
     }
 }
