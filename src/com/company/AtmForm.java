@@ -3,6 +3,7 @@ package com.company;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.stream.StreamSupport;
 
 public class AtmForm extends JFrame {
 
@@ -17,9 +18,13 @@ public class AtmForm extends JFrame {
     JButton btnGoToStart;
 
     JPanel accountPanel;
+    JList lstAccounts;
+
     JPanel actionPanel;
     JPanel mainPanel;
-    CardLayout card;
+    CardLayout cardLayout;
+
+    Card card;
 
     Atm atm;
 
@@ -41,8 +46,8 @@ public class AtmForm extends JFrame {
         mainPanel = new JPanel();
         mainPanel.setBackground(Color.BLUE);
 
-        card = new CardLayout();
-        mainPanel.setLayout(card);
+        cardLayout = new CardLayout();
+        mainPanel.setLayout(cardLayout);
 
         initStartPanel();
         initPinPanel();
@@ -61,6 +66,11 @@ public class AtmForm extends JFrame {
     private void initAccountPanel() {
         accountPanel = new JPanel();
         accountPanel.setBackground(Color.gray);
+
+        lstAccounts = new JList();
+
+        accountPanel.add(lstAccounts);
+
         mainPanel.add(accountPanel);
     }
 
@@ -75,7 +85,20 @@ public class AtmForm extends JFrame {
         lblPinResult = new JLabel();
 
         btnCheckPin.addActionListener(a -> {
+             var pin = new String(pfPin.getPassword());
+             var checkResult = atm.isPinValid(Integer.valueOf(pin));
 
+             if(!checkResult) {
+                lblPinResult.setText("INCORRECT PIN");
+                return;
+             }
+
+            var accountStream = StreamSupport.stream(atm.getBankAccounts().spliterator(), false);
+            var accounts = accountStream.map(account -> account.getNumber()).toArray();
+
+            lstAccounts.setListData(accounts);
+
+            cardLayout.next(mainPanel);
         });
 
         pinPanel.add(lblInfo);
@@ -91,7 +114,8 @@ public class AtmForm extends JFrame {
         startPanel.setBackground(Color.white);
         btnStart = new JButton("Start");
         btnStart.addActionListener(a -> {
-            card.next(mainPanel);
+            atm.enterCard(card);
+            cardLayout.next(mainPanel);
         });
         startPanel.add(btnStart);
         mainPanel.add(startPanel);
@@ -104,8 +128,12 @@ public class AtmForm extends JFrame {
         var client = new Client("Gusts","Link", "123");
 
         var bankAccount1 = new BankAccount("111", 100, client);
+        var bankAccount2 = new BankAccount("112", 200, client);
+
+        card = new Card(1111, "1212 1313 1414 1515", client);
 
         accounts.add(bankAccount1);
+        accounts.add(bankAccount2);
 
         atm = new Atm(10000, accounts);
     }
